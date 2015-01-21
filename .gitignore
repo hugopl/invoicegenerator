@@ -1,0 +1,4 @@
+*.pdf
+Gemfile.lock
+*.yml
+*.rubyproject
