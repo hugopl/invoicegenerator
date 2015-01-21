@@ -16,4 +16,4 @@ Just edit the html file.
 
 ## What to write in the YAML file?
 
-Run `./invoicegenerator.rb --help` and you will see an example, basically you cna use all keys you find as a command line option.
+Run `./invoicegenerator.rb --show-yml-example` and you will see an example, basically you can use all keys you find as a command line option.
