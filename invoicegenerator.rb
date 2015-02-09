@@ -50,7 +50,7 @@ def read_params
     opt :from,              'Contents of from field.', type: :string
     opt :header,            'Contents of the header.', type: :string, default: 'Invoice'
     opt :notes,             'Contents of notes field.', type: :string
-    opt :number,            'Invoice number.', type: :integer
+    opt :number,            'Invoice number.', type: :string
     opt 'show-yml-example', 'Show a example of a YML file that can be used by this script.'
     opt :yml,               'YML file with values for parameters not given into command line.', default: 'invoice.yml'
   end
