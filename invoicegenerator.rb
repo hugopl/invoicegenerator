@@ -8,7 +8,7 @@ require 'money'
 I18n.enforce_available_locales = false
 
 def show_yml_example_and_exit
-puts <<eot
+  puts <<eot
   from: |
     My multiline name
     Here's a second line
@@ -35,14 +35,14 @@ eot
   exit
 end
 
-def map_date_fields opts
+def map_date_fields(opts)
   [:date, 'due-date'].each do |i|
     opts[i] = yield(opts[i])
   end
 end
 
 def read_params
-  opts = Trollop::options do
+  opts = Trollop.options do
     opt :client,            'Contents of client field.', type: :string
     opt :currency,          'Currency used.', type: :string, default: 'USD'
     opt :date,              'Invoice date.', type: :date, default: Date.today
@@ -71,7 +71,7 @@ rescue Errno::ENOENT
   raise "YML file #{opts[:yml]} not found or can't be read."
 end
 
-def html_items opts
+def html_items(opts)
   opts[:balance] = 0
   items = opts[:items].map do |i|
     fail 'Items must have 3 values' if i.size != 3
@@ -88,7 +88,7 @@ def html_items opts
   items
 end
 
-def generate_html opts
+def generate_html(opts)
   map_date_fields(opts) do |value|
     value.strftime('%B %-d, %Y')
   end
@@ -114,4 +114,4 @@ rescue
   abort $!.message
 end
 
-main()
+main
