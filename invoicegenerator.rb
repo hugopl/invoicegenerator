@@ -66,6 +66,9 @@ def read_params
   map_date_fields(opts) do |value|
     value.is_a?(Date) ? value : Date.parse(value)
   end
+
+  raise 'Items not in the right format, something is missing.' unless opts[:items].is_a?(Array)
+
   opts
 rescue Errno::ENOENT
   raise "YML file #{opts[:yml]} not found or can't be read."
@@ -73,6 +76,7 @@ end
 
 def html_items(opts)
   opts[:balance] = 0
+
   items = opts[:items].map do |i|
     fail 'Items must have 3 values' if i.size != 3
 
