@@ -42,7 +42,7 @@ def map_date_fields(opts)
 end
 
 def read_params
-  opts = Trollop.options do
+  Trollop.options do
     opt :client,            'Contents of client field.', type: :string
     opt :currency,          'Currency used.', type: :string, default: 'USD'
     opt :date,              'Invoice date.', type: :date, default: Date.today
@@ -54,46 +54,47 @@ def read_params
     opt 'show-yml-example', 'Show a example of a YML file that can be used by this script.'
     opt :yml,               'YML file with values for parameters not given into command line.', default: 'invoice.yml'
   end
+end
 
-  show_yml_example_and_exit if opts[:'show-yml-example_given']
-
+def read_yml(opts)
   yaml = YAML.load(File.read(opts[:yml]))
   yaml.inject(opts) do |memo, item|
     memo[item[0].to_sym] = item[1]
     memo
   end
-
-  map_date_fields(opts) do |value|
-    value.is_a?(Date) ? value : Date.parse(value)
-  end
-
-  raise 'Items not in the right format, something is missing.' unless opts[:items].is_a?(Array)
-
-  today = Date.today
-  opts[:month] = today.strftime('%B')
-  opts[:past_month] = (today << 1).strftime('%B')
-  opts[:year] = today.strftime('%Y')
+  fail('Items not in the right format, something is missing.') unless opts[:items].is_a?(Array)
   opts
 rescue Errno::ENOENT
   raise "YML file #{opts[:yml]} not found or can't be read."
 end
 
-def html_items(opts)
-  opts[:balance] = 0
+def fix_date_options(opts)
+  map_date_fields(opts) do |value|
+    value.is_a?(Date) ? value : Date.parse(value)
+  end
+end
 
-  items = opts[:items].map do |i|
+def add_extra_options(opts)
+  today = Date.today
+  opts[:month] = today.strftime('%B')
+  opts[:past_month] = (today << 1).strftime('%B')
+  opts[:year] = today.strftime('%Y')
+
+  raw_balance = opts[:items].inject(0) do |balance, item|
+    balance + (item[2] * item[1])
+  end
+  opts[:balance] = Money.new(raw_balance, opts[:currency]).format
+end
+
+def format_items(opts)
+  opts[:items].map! do |i|
     fail 'Items must have 3 values' if i.size != 3
 
-    amount = i[2] * i[1]
-    opts[:balance] += amount
-
-    i[3] = Money.new(amount, opts[:currency]).format
+    i[3] = Money.new(i[2] * i[1], opts[:currency]).format
     i[2] = Money.new(i[2], opts[:currency]).format
     "<tr><td>#{i.join('</td><td>')}</td></tr>"
-  end.join
-
-  opts[:balance] = Money.new(opts[:balance], opts[:currency]).format
-  items
+  end
+  opts[:items] = opts[:items].join
 end
 
 def generate_html(opts)
@@ -101,7 +102,6 @@ def generate_html(opts)
     value.strftime('%B %-d, %Y')
   end
 
-  opts[:items] = html_items(opts)
   html = File.read('invoicegenerator.html')
 
   opts.each do |opt, value|
@@ -112,6 +112,12 @@ end
 
 def main
   opts = read_params
+  show_yml_example_and_exit if opts[:'show-yml-example_given']
+
+  read_yml(opts)
+  fix_date_options(opts)
+  add_extra_options(opts)
+  format_items(opts)
   html = generate_html(opts)
 
   kit = PDFKit.new(html.encode('iso-8859-1'))
