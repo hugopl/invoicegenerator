@@ -9,28 +9,28 @@ I18n.enforce_available_locales = false
 
 def show_yml_example_and_exit
   puts <<eot
-  from: |
-    My multiline name
-    Here's a second line
-  client: |
-    My multiline client
-    Hey ho, second line here
-  notes: |
-    If all your data are always the same, just the invoice number changes,
-    save the the static data in a yml and pass the invoice number on command line
-    by using (--number).
+from: |
+  My multiline name
+  Here's a second line
+client: |
+  My multiline client
+  Hey ho, second line here
+notes: |
+  If all your data are always the same, just the invoice number changes,
+  save the the static data in a yml and pass the invoice number on command line
+  by using (--number).
 
-    Note that the date is always default to today, and the due-date to today + 15
-  items:
-    -
-      - Nice item for %past_month% %year%
-      - 1
-      - 12334
-    -
-      - Other item, for %month%
-      - 0.5
-      - 100000
-  currency: GBP
+  Note that the date is always default to today, and the due-date to today + 15
+items:
+  -
+    - Nice item for %past_month% %year%
+    - 1
+    - 12334
+  -
+    - Other item, for %month%
+    - 0.5
+    - 100000
+currency: GBP
 eot
   exit
 end
