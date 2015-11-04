@@ -23,11 +23,11 @@ def show_yml_example_and_exit
     Note that the date is always default to today, and the due-date to today + 15
   items:
     -
-      - Nice item
+      - Nice item for %past_month% %year%
       - 1
       - 12334
     -
-      - Other item, just half
+      - Other item, for %month%
       - 0.5
       - 100000
   currency: GBP
@@ -69,6 +69,10 @@ def read_params
 
   raise 'Items not in the right format, something is missing.' unless opts[:items].is_a?(Array)
 
+  today = Date.today
+  opts[:month] = today.strftime('%B')
+  opts[:past_month] = (today << 1).strftime('%B')
+  opts[:year] = today.strftime('%Y')
   opts
 rescue Errno::ENOENT
   raise "YML file #{opts[:yml]} not found or can't be read."
