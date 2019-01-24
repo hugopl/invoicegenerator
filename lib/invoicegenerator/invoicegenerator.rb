@@ -7,6 +7,7 @@ require 'date'
 require 'money'
 
 I18n.enforce_available_locales = false
+Money.locale_backend = :currency
 
 module InvoiceGenerator
   def show_yml_example_and_exit
