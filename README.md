@@ -20,9 +20,11 @@ Then change the generated invoice.yml
 
 ## How to change the invoice template?
 
-I got more than a year to simple change this from a bare script into a gem, so
-as you would expect, to change the template, change the file inside the gem in
-a YOLO way, i.e. look out where the gem was installed and edit the file.
+Use the --template command line switch to specify an HTML template, to have a look in a example, type:
+
+```
+$ invoicegenerator --show-template-example
+```
 
 ## What to write in the YAML file?
 

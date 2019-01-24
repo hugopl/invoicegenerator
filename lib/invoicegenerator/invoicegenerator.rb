@@ -39,6 +39,11 @@ eot
     exit
   end
 
+  def show_template_example_and_exit
+    puts File.read(template_path)
+    exit
+  end
+
   def map_date_fields(opts)
     [:date, 'due-date'].each do |i|
       opts[i] = yield(opts[i])
@@ -55,8 +60,10 @@ eot
       opt :header,            'Contents of the header.', type: :string, default: 'Invoice'
       opt :notes,             'Contents of notes field.', type: :string
       opt :number,            'Invoice number.', type: :string
-      opt 'show-yml-example', 'Show a example of a YML file that can be used by this script.'
+      opt 'show-yml-example', 'Show an example of a YML file that can be used by this script.'
+      opt 'show-template-example', 'Show an example of a HTML template.'
       opt :stdin,             'Read YML file from STDIN.'
+      opt :template,          'HTML template to use', type: :string
       opt :yml,               'YML file with values for parameters not given into command line.', default: 'invoice.yml'
     end
   end
@@ -109,14 +116,16 @@ eot
     opts[:items] = opts[:items].join
   end
 
+  def template_path
+    File.join(File.dirname(__FILE__), 'invoicegenerator.html')
+  end
+
   def generate_html(opts)
     map_date_fields(opts) do |value|
       value.strftime('%B %-d, %Y')
     end
 
-    template_path = File.join(File.dirname(__FILE__), 'invoicegenerator.html')
-    html = File.read(template_path)
-
+    html = File.read(opts[:template] || template_path)
     opts.each do |opt, value|
       html.gsub!("%#{opt}%", value.to_s)
     end
@@ -126,6 +135,7 @@ eot
   def main
     opts = read_params
     show_yml_example_and_exit if opts[:'show-yml-example_given']
+    show_template_example_and_exit if opts[:'show-template-example_given']
 
     read_yml(opts)
     fix_date_options(opts)
@@ -137,8 +147,10 @@ eot
     name = "invoice-#{opts[:number]}.pdf"
     puts "Generating #{name}..."
     kit.to_file(name)
-  rescue RuntimeError
-    abort $ERROR_INFO.message
+  rescue Errno::ENOENT => e
+    abort e.message
+  rescue RuntimeError => e
+    abort e.message
   end
 
   extend self
