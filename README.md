@@ -1,18 +1,28 @@
 # Stupid invoice generator
 
-Put the data you usualy uses to create your invoices into a YML file, run this script and done, you have a nice pdf invoice
+Put the data you usualy uses to create your invoices into a YML file, run this
+gem and done, you have a nice pdf invoice
 
-## Install
+To see an example the fast possible way run:
 
-It's not a gem because I'm too lazy to create a gem just for that. so to use this script you should.
+```
+$ gem install invoicegenerator
+$ invoicegenerator --show-yml-example | invoicegenerator --stdin
+```
 
-  1. Clone this repository.
-  2. Execute `bundle`, so all dependencies will be installed (pdfkit, trollop, money).
-  3. run `./invoicegenerator.rb --help`, from now on you should know what to do.
+To have a starting point to write your YAML describing your invoice, type:
+
+```
+$ invoicegenerator --show-yml-example > invoice.yml
+```
+
+Then change the generated invoice.yml
 
 ## How to change the invoice template?
 
-Just edit the html file.
+I got more than a year to simple change this from a bare script into a gem, so
+as you would expect, to change the template, change the file inside the gem in
+a YOLO way, i.e. look out where the gem was installed and edit the file.
 
 ## What to write in the YAML file?
 

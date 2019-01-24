@@ -18,6 +18,7 @@ module InvoiceGenerator
   client: |
     My multiline client
     Hey ho, second line here
+  number: 2019-123
   notes: |
     If all your data are always the same, just the invoice number changes,
     save the the static data in a yml and pass the invoice number on command line
@@ -55,13 +56,20 @@ eot
       opt :notes,             'Contents of notes field.', type: :string
       opt :number,            'Invoice number.', type: :string
       opt 'show-yml-example', 'Show a example of a YML file that can be used by this script.'
+      opt :stdin,             'Read YML file from STDIN.'
       opt :yml,               'YML file with values for parameters not given into command line.', default: 'invoice.yml'
     end
   end
 
   def read_yml(opts)
-    yaml = YAML.safe_load(File.read(opts[:yml]))
-    yaml.inject(opts) do |memo, item|
+    if opts[:stdin]
+      data = StringIO.new
+      data << STDIN.read until STDIN.eof?
+      yaml = data.string
+    else
+      yaml = File.read(opts[:yml])
+    end
+    YAML.safe_load(yaml).inject(opts) do |memo, item|
       memo[item[0].to_sym] = item[1]
       memo
     end
@@ -116,7 +124,7 @@ eot
   end
 
   def main
-    opts = InvoiceGenerator.read_params
+    opts = read_params
     show_yml_example_and_exit if opts[:'show-yml-example_given']
 
     read_yml(opts)
