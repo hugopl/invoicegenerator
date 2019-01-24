@@ -1,0 +1,1 @@
+require 'invoicegenerator/invoicegenerator'
