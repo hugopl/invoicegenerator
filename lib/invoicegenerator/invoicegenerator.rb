@@ -8,6 +8,7 @@ require 'money'
 
 I18n.enforce_available_locales = false
 Money.locale_backend = :currency
+Money.rounding_mode = BigDecimal::ROUND_HALF_EVEN
 
 module InvoiceGenerator
   def show_yml_example_and_exit

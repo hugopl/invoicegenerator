@@ -29,3 +29,12 @@ $ invoicegenerator --show-template-example
 ## What to write in the YAML file?
 
 Run `invoicegenerator.rb --show-yml-example` and you will see an example, basically you can use all keys you find as a command line option.
+
+## I got an error while running the example!
+
+```
+Generating invoice-2019-123.pdf...
+No such file or directory @ rb_file_s_size - invoice-2019-123.pdf
+```
+
+This is a [PDFKit issue](https://github.com/pdfkit/pdfkit/issues/380#issuecomment-421269690), install libXrender package on your distro and the issue should be fixed.
