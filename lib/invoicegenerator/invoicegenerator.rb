@@ -144,7 +144,7 @@ eot
     format_items(opts)
     html = generate_html(opts)
 
-    kit = PDFKit.new(html.encode('iso-8859-1'))
+    kit = PDFKit.new(html)
     name = "invoice-#{opts[:number]}.pdf"
     puts "Generating #{name}..."
     kit.to_file(name)
