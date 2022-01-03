@@ -25,7 +25,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency('money', '~> 6.13.7')
   spec.add_dependency('optimist', '~> 3.0')
   spec.add_dependency('pdfkit', '0.8.4.3.2')
-  spec.add_development_dependency('bundler', '~> 2.1.4')
+  spec.add_development_dependency('bundler', '>= 2.2.33')
   spec.add_development_dependency('rake', '~> 12.3')
   spec.required_ruby_version = '>= 2.5.7'
 end
