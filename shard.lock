@@ -1,0 +1,6 @@
+version: 2.0
+shards:
+  hpdf:
+    git: https://github.com/threez/hpdf.cr.git
+    version: 0.9.7
+
