@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  push:
+    branches: ["*"]
+    tags: ["v*"]
+  pull_request:
+
+jobs:
+  # Build, smoke-test, and produce the static binary
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    container:
+      image: crystallang/crystal:latest-alpine
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: apk add --no-cache cmake make g++ zlib-dev zlib-static libpng-dev libpng-static
+
+      - name: Build and install libharu as a static library
+        run: |
+          wget -q https://github.com/libharu/libharu/archive/refs/tags/v2.4.5.tar.gz
+          tar xzf v2.4.5.tar.gz
+          cmake -S libharu-2.4.5 -B libharu-build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_SHARED_LIBS=OFF \
+            -DCMAKE_INSTALL_PREFIX=/usr/local
+          cmake --build libharu-build --parallel
+          cmake --install libharu-build
+
+      - name: Install dependencies
+        run: shards install --frozen
+
+      - name: Build static binary
+        run: shards build --release --no-debug --static
+
+      - name: Smoke-test — generate example invoice
+        run: ./bin/invoicegenerator --show-yml-example | ./bin/invoicegenerator --stdin --output invoice.pdf
+
+      - name: Verify output is a valid PDF
+        run: grep -qc "^%PDF" invoice.pdf
+
+      - name: Upload binary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: invoicegenerator-linux-x86_64
+          path: bin/invoicegenerator
+          if-no-files-found: error
+
+  # Ameba linter
+  lint:
+    name: Ameba linter
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Ameba
+        uses: crystal-ameba/github-action@v0.12.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # GitHub release (on version tags only)
+  release:
+    name: Create GitHub release
+    needs: [build, lint]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download static binary
+        uses: actions/download-artifact@v4
+        with:
+          name: invoicegenerator-linux-x86_64
+
+      - name: Make binary executable
+        run: chmod +x invoicegenerator
+
+      - name: Compress binary
+        run: tar -czf invoicegenerator-linux-x86_64.tar.gz invoicegenerator
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: invoicegenerator-linux-x86_64.tar.gz
+          generate_release_notes: true

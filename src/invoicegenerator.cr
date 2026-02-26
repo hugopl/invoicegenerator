@@ -1,6 +1,14 @@
-require "hpdf"
+# UTF-8 support and memory font loading — not yet wrapped by hpdf.cr
+@[Link("png")]
+@[Link("z")]
+lib LibHaru
+  fun use_utf_encodings = HPDF_UseUTFEncodings(doc : Doc) : UInt32
+  fun load_tt_font_from_memory = HPDF_LoadTTFontFromMemory(doc : Doc, buffer : UInt8*, size : UInt32, embedding : Int32) : UInt8*
+end
+
 require "option_parser"
 require "yaml"
+require "hpdf"
 
 # YAML file schema
 
@@ -236,12 +244,6 @@ def load_invoice_data(opts)
     notes:          notes,
     items:          invoice_file.items,
   }
-end
-
-# UTF-8 support and memory font loading — not yet wrapped by hpdf.cr
-lib LibHaru
-  fun use_utf_encodings = HPDF_UseUTFEncodings(doc : Doc) : UInt32
-  fun load_tt_font_from_memory = HPDF_LoadTTFontFromMemory(doc : Doc, buffer : UInt8*, size : UInt32, embedding : Int32) : UInt8*
 end
 
 # Font bytes embedded at compile time from the source tree — no files needed at runtime.
