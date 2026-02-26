@@ -134,6 +134,13 @@ $ shards build --release
 $ ./bin/invoicegenerator --help
 ```
 
+## Third-party licenses
+
+This binary embeds the [DejaVu Sans](https://dejavu-fonts.github.io/) fonts.
+DejaVu fonts are derived from Bitstream Vera fonts, copyright © 2003 Bitstream, Inc.
+DejaVu changes are in the public domain. The full license text is available at
+<https://dejavu-fonts.github.io/License.html>.
+
 ## Contributing
 
 1. Fork it (<https://github.com/hugopl/invoicegenerator/fork>)
