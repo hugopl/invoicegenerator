@@ -57,7 +57,7 @@ Each item under `items` has:
 | Field         | Description                        |
 |---------------|------------------------------------|
 | `description` | Description of the service/product |
-| `quantity`    | Quantity (integer)                 |
+| `quantity`    | Quantity (default: `1`)            |
 | `price`       | Unit price **in cents** (integer)  |
 
 ### Dynamic variables
@@ -109,23 +109,13 @@ You will need the [Crystal compiler](https://crystal-lang.org/install/) and
 
 libharu is required at compile time when building from source.
 
-| Distro                      | Command                              |
+| OS/Distro                   | Command                              |
 |-----------------------------|--------------------------------------|
 | Debian / Ubuntu             | `sudo apt install libharu-dev`       |
 | Fedora / RHEL               | `sudo dnf install libharu-devel`     |
 | Arch Linux                  | `sudo pacman -S libharu`             |
 | openSUSE                    | `sudo zypper install libharu-devel`  |
-
-### Install DejaVu fonts
-
-The generator uses DejaVu Sans to render text with broad Unicode support.
-
-| Distro                      | Command                                    |
-|-----------------------------|--------------------------------------------|
-| Debian / Ubuntu             | `sudo apt install fonts-dejavu`            |
-| Fedora / RHEL               | `sudo dnf install dejavu-sans-fonts`       |
-| Arch Linux                  | `sudo pacman -S ttf-dejavu`                |
-| openSUSE                    | `sudo zypper install dejavu-fonts`         |
+| OSX                         | `brew install libharu`               |
 
 ### Compile
 
