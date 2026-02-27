@@ -7,34 +7,54 @@ on:
   pull_request:
 
 jobs:
-  # Build, smoke-test, and produce the static binary
+  # Build, smoke-test, and produce binaries for each platform
   build:
-    name: Build
-    runs-on: ubuntu-latest
-    container:
-      image: crystallang/crystal:latest-alpine
+    name: Build (${{ matrix.arch }})
+    runs-on: ${{ matrix.runs-on }}
+    container: ${{ matrix.container || '' }}
+    strategy:
+      matrix:
+        include:
+          - arch: linux-x86_64
+            runs-on: ubuntu-latest
+            container: crystallang/crystal:latest-alpine
+            build-flags: --static
+          - arch: macos-arm64
+            runs-on: macos-latest
+            container: ""
+            build-flags: ""
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install build dependencies
+      - name: Install Crystal (macOS)
+        if: matrix.arch == 'macos-arm64'
+        uses: crystal-lang/install-crystal@v1
+
+      - name: Install build dependencies (Linux)
+        if: matrix.arch == 'linux-x86_64'
         run: apk add --no-cache cmake make g++ zlib-dev zlib-static libpng-dev libpng-static
 
-      - name: Build and install libharu as a static library
+      - name: Install build dependencies (macOS)
+        if: matrix.arch == 'macos-arm64'
+        run: brew install libharu
+
+      - name: Build and install libharu (Linux)
+        if: matrix.arch == 'linux-x86_64'
         run: |
           wget -q https://github.com/libharu/libharu/archive/refs/tags/v2.4.5.tar.gz
           tar xzf v2.4.5.tar.gz
           cmake -S libharu-2.4.5 -B libharu-build \
             -DCMAKE_BUILD_TYPE=Release \
             -DBUILD_SHARED_LIBS=OFF \
-            -DCMAKE_INSTALL_PREFIX=/usr/local
+            -DCMAKE_INSTALL_PREFIX=$HOME/.local
           cmake --build libharu-build --parallel
           cmake --install libharu-build
 
       - name: Install dependencies
         run: shards install --frozen
 
-      - name: Build static binary
-        run: shards build --release --no-debug --static
+      - name: Build binary
+        run: PKG_CONFIG_PATH=$HOME/.local/lib/pkgconfig shards build --release --no-debug ${{ matrix.build-flags }}
 
       - name: Smoke-test — generate example invoice
         run: ./bin/invoicegenerator --show-yml-example | ./bin/invoicegenerator --stdin --output invoice.pdf
@@ -45,7 +65,7 @@ jobs:
       - name: Upload binary artifact
         uses: actions/upload-artifact@v4
         with:
-          name: invoicegenerator-linux-x86_64
+          name: invoicegenerator-${{ matrix.arch }}
           path: bin/invoicegenerator
           if-no-files-found: error
 
@@ -70,19 +90,23 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Download static binary
+      - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          name: invoicegenerator-linux-x86_64
+          pattern: invoicegenerator-*
+          merge-multiple: false
 
-      - name: Make binary executable
-        run: chmod +x invoicegenerator
-
-      - name: Compress binary
-        run: tar -czf invoicegenerator-linux-x86_64.tar.gz invoicegenerator
+      - name: Compress binaries
+        run: |
+          chmod +x invoicegenerator-linux-x86_64/invoicegenerator
+          chmod +x invoicegenerator-macos-arm64/invoicegenerator
+          tar -czf invoicegenerator-linux-x86_64.tar.gz -C invoicegenerator-linux-x86_64 invoicegenerator
+          tar -czf invoicegenerator-macos-arm64.tar.gz  -C invoicegenerator-macos-arm64  invoicegenerator
 
       - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
-          files: invoicegenerator-linux-x86_64.tar.gz
+          files: |
+            invoicegenerator-linux-x86_64.tar.gz
+            invoicegenerator-macos-arm64.tar.gz
           generate_release_notes: true
