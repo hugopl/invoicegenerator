@@ -7,9 +7,37 @@ tool and done, you have a nice PDF invoice.
 > and now uses [libharu](http://libharu.org/) for PDF generation instead of
 > wkhtmltopdf/WebKit. It no longer depends on X11, WebKit, or any browser engine.
 
-Pre-built binaries with no external dependencies can be downloaded from the
+## Install
+
+Pre-built binaries with no external dependencies are published on the
 [releases page](https://github.com/hugopl/invoicegenerator/releases), for Linux
 x86_64 (fully static) and macOS arm64 (links only libraries shipped with the OS).
+
+Linux x86_64:
+
+```
+$ curl -sL https://github.com/hugopl/invoicegenerator/releases/latest/download/invoicegenerator-linux-x86_64.tar.gz | tar xz
+```
+
+macOS arm64:
+
+```
+$ curl -sL https://github.com/hugopl/invoicegenerator/releases/latest/download/invoicegenerator-macos-arm64.tar.gz | tar xz
+```
+
+On macOS, prefer the command above over downloading the tarball in a browser.
+The binary is not signed with an Apple Developer ID, and a browser marks
+downloads as quarantined, so Gatekeeper kills it and reports *"Apple could not
+verify invoicegenerator is free of malware"*. The flag survives extraction, so
+clear it on the extracted binary:
+
+```
+$ xattr -c invoicegenerator
+```
+
+Alternatively, allow it once under *System Settings → Privacy & Security →
+Open Anyway*, which clears the flag too. If you already did that, `xattr` will
+report no quarantine attribute to remove, and the binary should simply run.
 
 To see an example the fastest possible way, run:
 
