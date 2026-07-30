@@ -7,8 +7,9 @@ tool and done, you have a nice PDF invoice.
 > and now uses [libharu](http://libharu.org/) for PDF generation instead of
 > wkhtmltopdf/WebKit. It no longer depends on X11, WebKit, or any browser engine.
 
-A pre-built static binary with no external dependencies can be downloaded from
-the [releases page](https://github.com/hugopl/invoicegenerator/releases).
+Pre-built binaries with no external dependencies can be downloaded from the
+[releases page](https://github.com/hugopl/invoicegenerator/releases), for Linux
+x86_64 (fully static) and macOS arm64 (links only libraries shipped with the OS).
 
 To see an example the fastest possible way, run:
 

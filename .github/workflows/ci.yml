@@ -49,6 +49,74 @@ jobs:
           path: bin/invoicegenerator
           if-no-files-found: error
 
+  # Build, smoke-test, and produce the macOS arm64 binary
+  build-macos:
+    name: Build (macOS arm64)
+    runs-on: macos-15 # arm64 (Apple Silicon)
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: brew install crystal cmake libpng bdw-gc pcre2 libevent libyaml
+
+      - name: Build and install libharu as a static library
+        run: |
+          curl -sSL -o v2.4.5.tar.gz https://github.com/libharu/libharu/archive/refs/tags/v2.4.5.tar.gz
+          tar xzf v2.4.5.tar.gz
+          cmake -S libharu-2.4.5 -B libharu-build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_SHARED_LIBS=OFF \
+            -DCMAKE_PREFIX_PATH="$(brew --prefix libpng)" \
+            -DCMAKE_INSTALL_PREFIX="$PWD/deps"
+          cmake --build libharu-build --parallel
+          cmake --install libharu-build
+
+      # macOS has no static libSystem, so `--static` is unavailable. Instead,
+      # collect the static archives of every non-system dependency into a single
+      # directory. The linker checks each -L directory for .dylib before .a, so
+      # this directory must contain *only* archives for them to win.
+      - name: Stage static libraries
+        run: |
+          # Homebrew ships these read-only; install(1) keeps re-runs idempotent.
+          install -m 0644 "$(brew --prefix libpng)/lib/libpng.a" deps/lib/
+          install -m 0644 "$(brew --prefix bdw-gc)/lib/libgc.a" deps/lib/
+          install -m 0644 "$(brew --prefix pcre2)/lib/libpcre2-8.a" deps/lib/
+          install -m 0644 "$(brew --prefix libevent)/lib/libevent.a" deps/lib/
+          install -m 0644 "$(brew --prefix libevent)/lib/libevent_pthreads.a" deps/lib/
+          install -m 0644 "$(brew --prefix libyaml)/lib/libyaml.a" deps/lib/
+          ls -l deps/lib
+
+      - name: Install dependencies
+        run: shards install --frozen
+
+      - name: Build binary
+        env:
+          # Ours first so archives are preferred; Homebrew last as a fallback,
+          # which the otool check below turns into a hard failure if hit.
+          CRYSTAL_LIBRARY_PATH: ${{ github.workspace }}/deps/lib:/opt/homebrew/lib
+        run: shards build --release --no-debug
+
+      - name: Verify no Homebrew libraries are linked dynamically
+        run: |
+          otool -L bin/invoicegenerator
+          if otool -L bin/invoicegenerator | grep -E "/opt/homebrew|/usr/local"; then
+            echo "::error::Binary links a non-system dylib and is not self-contained"
+            exit 1
+          fi
+
+      - name: Smoke-test — generate example invoice
+        run: ./bin/invoicegenerator --show-yml-example | ./bin/invoicegenerator --stdin --output invoice.pdf
+
+      - name: Verify output is a valid PDF
+        run: grep -qc "^%PDF" invoice.pdf
+
+      - name: Upload binary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: invoicegenerator-macos-arm64
+          path: bin/invoicegenerator
+          if-no-files-found: error
+
   # Ameba linter
   lint:
     name: Ameba linter
@@ -64,25 +132,36 @@ jobs:
   # GitHub release (on version tags only)
   release:
     name: Create GitHub release
-    needs: [build, lint]
+    needs: [build, build-macos, lint]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
-      - name: Download static binary
+      - name: Download Linux binary
         uses: actions/download-artifact@v4
         with:
           name: invoicegenerator-linux-x86_64
+          path: linux-x86_64
 
-      - name: Make binary executable
-        run: chmod +x invoicegenerator
+      - name: Download macOS binary
+        uses: actions/download-artifact@v4
+        with:
+          name: invoicegenerator-macos-arm64
+          path: macos-arm64
 
-      - name: Compress binary
-        run: tar -czf invoicegenerator-linux-x86_64.tar.gz invoicegenerator
+      # Artifact upload does not preserve the executable bit.
+      - name: Compress binaries
+        run: |
+          for target in linux-x86_64 macos-arm64; do
+            chmod +x "$target/invoicegenerator"
+            tar -czf "invoicegenerator-$target.tar.gz" -C "$target" invoicegenerator
+          done
 
       - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
-          files: invoicegenerator-linux-x86_64.tar.gz
+          files: |
+            invoicegenerator-linux-x86_64.tar.gz
+            invoicegenerator-macos-arm64.tar.gz
           generate_release_notes: true
