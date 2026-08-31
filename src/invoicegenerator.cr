@@ -60,7 +60,7 @@ date: "2026-10-02"     # Default to now
 due_date: "2023-10-16" # Default to 2 weeks from now
 currency: "$"
 tax_rate: 0.05         # 5% sales tax; omit or set to null for no tax
-output: "invoice-$year-0000007.pdf" # Output PDF file path
+output: "invoice-$invoice_number-$year.pdf" # Output PDF file path; also accepts $month, $past_month, $invoice_date, $due_date, $currency, $client_name, $from_name
 notes: |
   Wire Transfer Details:
     Bank: First National Bank
@@ -130,14 +130,21 @@ def parse_options
   }
 end
 
-def expand_variables(text : String) : String
+# Variables derived from the current date, available in every field.
+def date_variables : Hash(String, String)
   now = Time.local
   past = now - 1.month
 
-  text
-    .gsub("$past_month", past.to_s("%B"))
-    .gsub("$month", now.to_s("%B"))
-    .gsub("$year", now.year.to_s)
+  {
+    "year"       => now.year.to_s,
+    "month"      => now.to_s("%B"),
+    "past_month" => past.to_s("%B"),
+  }
+end
+
+# Substitute every $key in `vars` for its value, anywhere in `text`.
+def expand_variables(text : String, vars : Hash(String, String)) : String
+  vars.reduce(text) { |result, (key, value)| result.gsub("$#{key}", value) }
 end
 
 def load_invoice_data(opts)
@@ -152,7 +159,9 @@ def load_invoice_data(opts)
                   File.read(yaml_file)
                 end
 
-  yaml_source = expand_variables(yaml_source)
+  # Date-based variables ($year, $month, ...) can be expanded before parsing,
+  # since they don't depend on any other field in the file.
+  yaml_source = expand_variables(yaml_source, date_variables)
 
   invoice_file = InvoiceFile.from_yaml(yaml_source)
 
@@ -161,16 +170,32 @@ def load_invoice_data(opts)
   client_lines = invoice_file.client.lines.map(&.rstrip)
 
   # CLI flags override YAML values when explicitly provided
+  invoice_number = opts[:invoice_number] || invoice_file.invoice_number
+  invoice_date = opts[:invoice_date] || invoice_file.invoice_date
+  due_date = opts[:due_date] || invoice_file.due_date
+  currency = opts[:currency] || invoice_file.currency
+
+  # Once the fields above are resolved, other fields (output, notes, ...) may
+  # reference them too.
+  field_vars = date_variables.merge({
+    "invoice_number" => invoice_number,
+    "invoice_date"   => invoice_date,
+    "due_date"       => due_date,
+    "currency"       => currency,
+    "client_name"    => client_lines.first? || "",
+    "from_name"      => from_lines.first? || "",
+  })
+
   {
     from:           from_lines,
     client:         client_lines,
-    invoice_number: opts[:invoice_number] || invoice_file.invoice_number,
-    invoice_date:   opts[:invoice_date] || invoice_file.invoice_date,
-    due_date:       opts[:due_date] || invoice_file.due_date,
-    currency:       opts[:currency] || invoice_file.currency,
+    invoice_number: invoice_number,
+    invoice_date:   invoice_date,
+    due_date:       due_date,
+    currency:       currency,
     tax_rate:       opts[:tax_rate] || invoice_file.tax_rate,
-    output:         invoice_file.output,
-    notes:          invoice_file.notes,
+    output:         expand_variables(invoice_file.output, field_vars),
+    notes:          expand_variables(invoice_file.notes, field_vars),
     items:          invoice_file.items,
   }
 end

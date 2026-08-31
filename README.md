@@ -95,7 +95,7 @@ Any field in the YAML file can include the following variables, which are
 automatically substituted at generation time:
 
 | Variable      | Replaced with                          |
-|---------------|----------------------------------------|
+|---------------|-----------------------------------------|
 | `$month`      | Current month (e.g. `October`)         |
 | `$past_month` | Previous month (e.g. `September`)      |
 | `$year`       | Current year (e.g. `2024`)             |
@@ -107,6 +107,25 @@ invoice_number: "INV-$year-007"
 notes: |
   Services rendered for $past_month $year.
   Thank you for your business!
+```
+
+The `output` and `notes` fields additionally accept variables referencing
+other resolved fields from the same file, so they can be derived from them:
+
+| Variable          | Replaced with                         |
+|-------------------|-----------------------------------------|
+| `$invoice_number` | The (already-expanded) invoice number |
+| `$invoice_date`   | The invoice date                      |
+| `$due_date`       | The due date                          |
+| `$currency`       | The currency symbol                   |
+| `$client_name`    | First line of `client`                |
+| `$from_name`      | First line of `from`                  |
+
+Example:
+
+```yaml
+invoice_number: "INV-$year$month-007"
+output: "$client_name-$invoice_number.pdf"
 ```
 
 ## Command-line options
