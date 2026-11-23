@@ -94,11 +94,13 @@ Each item under `items` has:
 Any field in the YAML file can include the following variables, which are
 automatically substituted at generation time:
 
-| Variable      | Replaced with                          |
-|---------------|-----------------------------------------|
-| `$month`      | Current month (e.g. `October`)         |
-| `$past_month` | Previous month (e.g. `September`)      |
-| `$year`       | Current year (e.g. `2024`)             |
+| Variable             | Replaced with                             |
+|----------------------|-------------------------------------------|
+| `$month`             | Current month (e.g. `October`)            |
+| `$month_number`      | Current month, zero-padded (e.g. `10`)    |
+| `$past_month`        | Previous month (e.g. `September`)         |
+| `$past_month_number` | Previous month, zero-padded (e.g. `09`)   |
+| `$year`              | Current year (e.g. `2024`)                |
 
 Example usage in your YAML:
 

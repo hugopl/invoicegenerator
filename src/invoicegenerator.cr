@@ -144,15 +144,19 @@ def date_variables : Hash(String, String)
   past = now - 1.month
 
   {
-    "year"       => now.year.to_s,
-    "month"      => now.to_s("%B"),
-    "past_month" => past.to_s("%B"),
+    "year"              => now.year.to_s,
+    "month"             => now.to_s("%B"),
+    "month_number"      => now.to_s("%m"),
+    "past_month"        => past.to_s("%B"),
+    "past_month_number" => past.to_s("%m"),
   }
 end
 
 # Substitute every $key in `vars` for its value, anywhere in `text`.
+# Whole names are matched, so $month never clobbers the start of $month_number;
+# unknown $names are left untouched.
 def expand_variables(text : String, vars : Hash(String, String)) : String
-  vars.reduce(text) { |result, (key, value)| result.gsub("$#{key}", value) }
+  text.gsub(/\$(\w+)/) { |str, match| vars[match[1]]? || str }
 end
 
 def load_invoice_data(opts)
