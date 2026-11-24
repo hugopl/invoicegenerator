@@ -47,31 +47,31 @@ struct InvoiceItem
 end
 
 YAML_EXAMPLE = <<-YAML
-from: | # First line is the company name, remaining lines are the address
-  Your Company Inc.
-  1234 Company St,
-  Company Town, ST 12345
-client: | # First line is the client name, remaining lines are the address
-  Customer Name
-  1234 Customer St,
-  Customer Town, ST 12345
-invoice_number: "0000007"
-date: "2026-10-02"     # Default to now
-due_date: "2023-10-16" # Default to 2 weeks from now
-currency: "$"
-tax_rate: 0.05         # 5% sales tax; omit or set to null for no tax
-output: "invoice-$invoice_number-$year.pdf" # Output PDF file path; also accepts $month, $past_month, $invoice_date, $due_date, $currency, $client_name, $from_name
-notes: |
-  Wire Transfer Details:
-    Bank: First National Bank
-items:
-  - description: "Replacement of spark plugs"
-    quantity: 1 # Default to 1 if omitted
-    price: 4000
-  - description: "Brake pad replacement (front)"
-    quantity: 2
-    price: 4000
-YAML
+  from: | # First line is the company name, remaining lines are the address
+    Your Company Inc.
+    1234 Company St,
+    Company Town, ST 12345
+  client: | # First line is the client name, remaining lines are the address
+    Customer Name
+    1234 Customer St,
+    Customer Town, ST 12345
+  invoice_number: "0000007"
+  date: "2026-10-02"     # Default to now
+  due_date: "2023-10-16" # Default to 2 weeks from now
+  currency: "$"
+  tax_rate: 0.05         # 5% sales tax; omit or set to null for no tax
+  output: "invoice-$invoice_number-$year.pdf" # Output PDF file path; also accepts $month, $past_month, $invoice_date, $due_date, $currency, $client_name, $from_name
+  notes: |
+    Wire Transfer Details:
+      Bank: First National Bank
+  items:
+    - description: "Replacement of spark plugs"
+      quantity: 1 # Default to 1 if omitted
+      price: 4000
+    - description: "Brake pad replacement (front)"
+      quantity: 2
+      price: 4000
+  YAML
 
 # Parse a #RRGGBB hex string into a Float32 RGB tuple, or abort with an error.
 def parse_hex_color(hex : String) : Color
