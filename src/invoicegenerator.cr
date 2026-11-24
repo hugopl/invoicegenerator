@@ -76,8 +76,7 @@ YAML
 # Parse a #RRGGBB hex string into a Float32 RGB tuple, or abort with an error.
 def parse_hex_color(hex : String) : Color
   unless hex =~ /\A#([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2})\z/
-    STDERR.puts "Error: invalid color '#{hex}', expected format #RRGGBB."
-    exit 1
+    abort("Error: invalid color '#{hex}', expected format #RRGGBB.")
   end
   {$1.to_i(16) / 255.0_f32, $2.to_i(16) / 255.0_f32, $3.to_i(16) / 255.0_f32}
 end
@@ -106,13 +105,22 @@ def parse_options
     p.on("--date=YYYY-MM-DD", "Invoice date (YYYY-MM-DD)") { |v| invoice_date = v }
     p.on("--due-date=YYYY-MM-DD", "Due date (YYYY-MM-DD)") { |v| due_date = v }
     p.on("--currency=SYM", "Currency symbol (default: $)") { |v| currency = v }
-    p.on("--tax-rate=RATE", "Tax rate as decimal (e.g. 0.05); omit for no tax") { |v| tax_rate = v.to_f64 }
+    p.on("--tax-rate=RATE", "Tax rate as decimal (e.g. 0.05); omit for no tax") do |v|
+      tax_rate = v.to_f64? || abort("Error: invalid tax rate '#{v}', expected a decimal number (e.g. 0.05).")
+    end
     p.on("--output=FILE", "Output PDF path (overrides 'output' in YAML, default: invoice.pdf)") { |v| output = v }
     p.on("--color-accent=#RRGGBB", "Accent color in #RRGGBB format (default: #BE6340)") { |v| color_accent = parse_hex_color(v) }
     p.on("--file=FILE", "YAML invoice data file (default: invoice.yml)") { |v| yaml_file = v }
     p.on("--stdin", "Read YAML from STDIN instead of a file") { read_stdin = true }
     p.on("--show-yml-example", "Print an example YAML invoice file and exit") { puts YAML_EXAMPLE; exit 0 }
     p.on("-h", "--help", "Show this help") { puts p; exit 0 }
+
+    p.invalid_option do |flag|
+      abort("Error: unknown option '#{flag}'.\nRun 'invoicegenerator --help' to see the available options.")
+    end
+    p.missing_option do |flag|
+      abort("Error: option '#{flag}' requires a value.\nRun 'invoicegenerator --help' to see the available options.")
+    end
   end
 
   {
@@ -153,8 +161,7 @@ def load_invoice_data(opts)
                 else
                   yaml_file = opts[:yaml_file]
                   unless File.exists?(yaml_file)
-                    STDERR.puts "Error: YAML file '#{yaml_file}' not found."
-                    exit 1
+                    abort("Error: YAML file '#{yaml_file}' not found.")
                   end
                   File.read(yaml_file)
                 end
